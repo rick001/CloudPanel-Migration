@@ -317,7 +317,10 @@ while IFS="|" read -r site_id domain_name site_user db_name db_user; do
 
     # Step 16: Dump the MySQL database using clpctl in the background
     echo "Dumping the MySQL database for $domain_name using clpctl db:export..." | tee -a "$LOGFILE"
-    sshpass -p "$ssh_pass" ssh "$ssh_user@$ssh_host" "mkdir -p '$remote_backup_dir' && clpctl db:export --databaseName='$db_name' --file='$remote_sql_file'" &
+   # sshpass -p "$ssh_pass" ssh "$ssh_user@$ssh_host" "mkdir -p '$remote_backup_dir' && clpctl db:export --databaseName='$db_name' --file='$remote_sql_file'" &
+
+   sshpass -p "$ssh_pass" ssh -n "$ssh_user@$ssh_host" \
+  "mkdir -p '$remote_backup_dir' && clpctl db:export --databaseName='$db_name' --file='$remote_sql_file'"
 
     if [ $? -eq 0 ]; then
         echo "Database $db_name export initiated in the background." | tee -a "$LOGFILE"
@@ -328,8 +331,9 @@ while IFS="|" read -r site_id domain_name site_user db_name db_user; do
 
     # Step 17: Copy the compressed MySQL dump from remote to local in background
     echo "Copying the MySQL dump from remote to local server for $domain_name..." | tee -a "$LOGFILE"
-    sshpass -p "$ssh_pass" scp "$ssh_user@$ssh_host:$remote_sql_file" "/tmp/${db_name}.sql.gz" &
-
+   # sshpass -p "$ssh_pass" scp "$ssh_user@$ssh_host:$remote_sql_file" "/tmp/${db_name}.sql.gz" &
+   sshpass -p "$ssh_pass" scp < /dev/null "$ssh_user@$ssh_host:$remote_sql_file" "/tmp/${db_name}.sql.gz"
+   
     if [ $? -eq 0 ]; then
         echo "MySQL dump copy initiated in the background for $domain_name." | tee -a "$LOGFILE"
     else
